@@ -19,11 +19,14 @@ export class ScreenshotError extends Error {}
 const MEDIA_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 // dataUrl：前端传来的 "data:image/jpeg;base64,..." 字符串
-export async function readScreenshot(dataUrl) {
+export function parseDataUrl(dataUrl) {
   const match = /^data:(image\/[a-z]+);base64,(.+)$/.exec(String(dataUrl));
   if (!match || !MEDIA_TYPES.includes(match[1])) throw new ScreenshotError("只支持 JPG、PNG、WebP 格式的图片");
+  return { mediaType: match[1], base64: match[2] };
+}
 
-  const r = await askAIJSON(SYSTEM, "识别这张截图里的战绩。", "vision", { mediaType: match[1], base64: match[2] });
+export async function readScreenshot(dataUrl) {
+  const r = await askAIJSON(SYSTEM, "识别这张截图里的战绩。", "vision", parseDataUrl(dataUrl));
   if (!r) throw new ScreenshotError("识图服务暂时不可用，稍后再试");
   if (!r.isLolStats) throw new ScreenshotError("这张图好像不是英雄联盟的战绩截图，换一张试试");
 
