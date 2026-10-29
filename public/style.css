@@ -450,6 +450,11 @@ h3 { font-size: 16px; margin: 28px 0 10px; }
 .form-chip { font-size: 12px; padding: 4px 9px; border-radius: 999px; background: #ffffff08; color: #4f5870; border: 1px solid #ffffff10; }
 .form-chip.got { background: var(--gold-soft); color: var(--gold); border-color: #6a5420; }
 
+/* 页脚说明 */
+.site-foot { max-width: 560px; margin: 40px auto 0; text-align: center; color: #5d6780; font-size: 12px; line-height: 1.8; }
+.site-foot p { margin: 0; }
+.site-foot a { color: #8a94a8; }
+
 @media (max-width: 420px) {
   .row { grid-template-columns: 1fr; }
   .chips { grid-template-columns: repeat(2, 1fr); }
