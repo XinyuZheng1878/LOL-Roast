@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>峡谷锐评官</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b0f17;
+      --panel: #141a26;
+      --line: #263045;
+      --text: #e8ecf3;
+      --muted: #8a94a8;
+      --gold: #e6b450;
+      --gold-soft: rgba(230, 180, 80, 0.14);
+      --red: #ff5d5d;
+      --green: #4cd08a;
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(1200px 600px at 50% -200px, #1b2438 0%, var(--bg) 60%);
+      color: var(--text);
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      padding: 32px 16px 64px;
+    }
+    .wrap { max-width: 520px; margin: 0 auto; }
+    h1 { font-size: 28px; margin: 0 0 6px; letter-spacing: 1px; }
+    h1 span { color: var(--gold); }
+    .sub { color: var(--muted); margin: 0 0 24px; font-size: 14px; }
+
+    form {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+    }
+    label { font-size: 13px; color: var(--muted); display: grid; gap: 6px; }
+    input, select {
+      width: 100%;
+      background: #0e131d;
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 15px;
+    }
+    input:focus, select:focus { outline: 2px solid var(--gold); outline-offset: -1px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .styles { display: flex; gap: 8px; flex-wrap: wrap; }
+    .styles input { display: none; }
+    .styles label {
+      display: block;
+      padding: 7px 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      cursor: pointer;
+      color: var(--text);
+      font-size: 14px;
+    }
+    .styles input:checked + label { border-color: var(--gold); background: var(--gold-soft); color: var(--gold); }
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      background: linear-gradient(180deg, #f0c568, #c9932f);
+      color: #1a1205;
+    }
+    button:disabled { opacity: 0.6; cursor: wait; }
+    button.ghost { background: transparent; color: var(--gold); border: 1px solid var(--gold); }
+    .notice { font-size: 13px; color: var(--muted); background: #0e131d; border-radius: 8px; padding: 10px 12px; }
+    .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: #0e131d; padding: 4px; border-radius: 10px; }
+    .tab { background: transparent; color: var(--muted); font-size: 14px; padding: 9px; font-weight: 600; }
+    .tab.active { background: var(--panel); color: var(--gold); }
+    .drop {
+      display: grid; place-items: center; text-align: center;
+      min-height: 150px; padding: 12px;
+      border: 1.5px dashed var(--line); border-radius: 12px;
+      color: var(--text); font-size: 15px; cursor: pointer; line-height: 1.6;
+    }
+    .drop small { color: var(--muted); font-size: 12px; }
+    .drop.over, .drop:hover { border-color: var(--gold); background: var(--gold-soft); }
+    .drop input { display: none; }
+    .drop img { max-width: 100%; max-height: 260px; border-radius: 8px; }
+    .error { color: var(--red); font-size: 14px; min-height: 20px; margin: 12px 0 0; }
+
+    /* 分享卡片 */
+    #result { margin-top: 24px; display: none; }
+    .card {
+      position: relative;
+      overflow: hidden;
+      border-radius: 18px;
+      padding: 24px 22px 20px;
+      background: linear-gradient(160deg, #1d2232 0%, #11151f 55%, #1a1408 100%);
+      border: 1px solid #3a3220;
+    }
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -40% -40% auto auto;
+      width: 320px; height: 320px;
+      background: radial-gradient(circle, rgba(230, 180, 80, 0.22), transparent 70%);
+    }
+    .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; position: relative; }
+    .player { font-size: 14px; color: var(--muted); }
+    .title { font-size: 30px; font-weight: 800; color: var(--gold); margin: 4px 0 0; letter-spacing: 2px; }
+    .score { text-align: center; flex-shrink: 0; }
+    .score b { display: block; font-size: 40px; line-height: 1; }
+    .score small { color: var(--muted); font-size: 12px; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 18px 0; position: relative; }
+    .stat { background: rgba(255, 255, 255, 0.04); border-radius: 10px; padding: 10px 4px; text-align: center; }
+    .stat b { display: block; font-size: 18px; }
+    .stat small { color: var(--muted); font-size: 11px; }
+    .persona { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin-bottom: 10px; position: relative; }
+    .persona b { color: var(--text); }
+    .rarity { font-size: 11px; font-weight: 900; padding: 2px 8px; border-radius: 4px; letter-spacing: 1px; }
+    .rarity.N { background: #3a4255; color: #c5cbd8; }
+    .rarity.R { background: #1f4a7a; color: #8cc4ff; }
+    .rarity.SR { background: #4b2a7a; color: #d4a8ff; }
+    .rarity.SSR { background: linear-gradient(90deg, #f0c568, #ff8a5b); color: #2a1300; }
+    .card.SSR { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), 0 0 32px rgba(230, 180, 80, 0.35); }
+    .card.SR { border-color: #7a4fc0; }
+    .lines {
+      position: relative;
+      background: rgba(255, 255, 255, 0.05);
+      border-left: 3px solid var(--gold);
+      padding: 12px 14px;
+      border-radius: 0 10px 10px 0;
+      font-size: 15px;
+      line-height: 1.75;
+    }
+    .lines p { margin: 0; }
+    .lines p + p { margin-top: 4px; }
+    .tags { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 12px; position: relative; }
+    .tag { font-size: 13px; padding: 4px 10px; border-radius: 999px; background: var(--gold-soft); color: var(--gold); }
+    .advice { font-size: 13px; color: var(--green); position: relative; }
+    .footer { display: flex; justify-content: space-between; margin-top: 16px; font-size: 11px; color: var(--muted); position: relative; }
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+
+    /* 对局列表 */
+    h2 { font-size: 18px; margin: 32px 0 4px; }
+    .hint { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+    .matches { display: grid; gap: 8px; }
+    .match {
+      display: grid;
+      grid-template-columns: 6px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      text-align: left;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px 10px 0;
+      color: var(--text);
+      font-weight: 400;
+      font-size: 14px;
+      overflow: hidden;
+    }
+    .match:hover, .match.active { border-color: var(--gold); }
+    .match .bar { align-self: stretch; margin: -10px 0; }
+    .match.win .bar { background: var(--green); }
+    .match.loss .bar { background: var(--red); }
+    .match small { color: var(--muted); display: block; font-size: 12px; margin-top: 2px; }
+    .match .kda { font-weight: 700; font-size: 15px; }
+
+    /* 赛后报告 */
+    #report { margin-top: 20px; display: none; }
+    .report {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 22px;
+    }
+    .r-head { display: flex; gap: 16px; align-items: center; }
+    .grade {
+      width: 64px; height: 64px; flex-shrink: 0;
+      border-radius: 14px;
+      display: grid; place-items: center;
+      font-size: 36px; font-weight: 900;
+      background: var(--gold-soft); color: var(--gold);
+      border: 1px solid var(--gold);
+    }
+    .grade.g-C, .grade.g-D { background: rgba(255, 93, 93, 0.12); color: var(--red); border-color: var(--red); }
+    .r-meta { font-size: 13px; color: var(--muted); }
+    .r-headline { font-size: 17px; font-weight: 700; margin-top: 4px; line-height: 1.4; }
+    .r-section { margin-top: 20px; }
+    .r-section h3 { font-size: 14px; color: var(--muted); font-weight: 600; margin: 0 0 10px; }
+    .legend { display: flex; gap: 14px; font-size: 12px; color: var(--muted); margin-bottom: 10px; flex-wrap: wrap; }
+    .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+    .metric { display: grid; grid-template-columns: 76px 1fr; gap: 10px; align-items: center; margin-bottom: 10px; font-size: 13px; }
+    .metric-label { color: var(--muted); }
+    .metric-bars { display: grid; gap: 3px; position: relative; }
+    .mbar { height: 14px; border-radius: 3px; position: relative; min-width: 2px; }
+    .mbar span { position: absolute; left: calc(100% + 6px); top: -2px; font-size: 12px; white-space: nowrap; }
+    .mbar.me { background: var(--gold); }
+    .mbar.op { background: #5b6b8c; }
+    .bench { position: absolute; top: -3px; bottom: -3px; width: 0; border-left: 2px dashed var(--text); opacity: 0.6; }
+    .metric-bars { margin-right: 52px; }
+    .list { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; line-height: 1.55; }
+    .problem { background: rgba(255, 93, 93, 0.07); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+    .problem b { color: var(--red); display: block; margin-bottom: 2px; font-size: 14px; }
+    .problem p { margin: 0; font-size: 14px; line-height: 1.55; }
+    .good li::marker { color: var(--green); }
+    .todo li::marker { color: var(--gold); }
+
+    @media (max-width: 420px) {
+      .row { grid-template-columns: 1fr; }
+      .title { font-size: 24px; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>峡谷<span>锐评官</span></h1>
+    <p class="sub">上传战绩截图，抽一位锐评官来锐评你</p>
+
+    <form id="form">
+      <div class="tabs">
+        <button type="button" class="tab active" data-mode="image">📸 上传战绩截图</button>
+        <button type="button" class="tab" data-mode="name">🎮 召唤师名 / 演示</button>
+      </div>
+      <div id="modeImage">
+        <label class="drop" id="drop">
+          <input type="file" id="file" accept="image/png,image/jpeg,image/webp" />
+          <img id="preview" alt="" hidden />
+          <span id="dropText">点击选择或拖入截图<br /><small>掌盟/WeGame 战绩列表、客户端生涯页、单局结算页都可以</small></span>
+        </label>
+      </div>
+      <div id="modeName" hidden>
+      <div id="demoNotice" class="notice" hidden>
+        还没配置 Riot API key，目前用的是<b>演示数据</b>（随便输个名字就行）。
+      </div>
+      <div class="row">
+        <label>召唤师名（名字#标签）
+          <input id="riotId" placeholder="Faker#KR1" autocomplete="off" />
+        </label>
+        <label>服务器
+          <select id="server"></select>
+        </label>
+      </div>
+      </div>
+      <div>
+        <label style="margin-bottom:6px">锐评语气（锐评官的人设和体裁每次随机抽取）</label>
+        <div class="styles">
+          <input type="radio" name="style" id="s0" value="random" checked /><label for="s0">🎲 随机</label>
+          <input type="radio" name="style" id="s1" value="savage" /><label for="s1">🔥 毒舌</label>
+          <input type="radio" name="style" id="s2" value="yinyang" /><label for="s2">🙂 阴阳怪气</label>
+          <input type="radio" name="style" id="s3" value="gentle" /><label for="s3">🤗 温柔吐槽</label>
+        </div>
+      </div>
+      <button id="submit" type="submit">开始锐评</button>
+    </form>
+    <p id="error" class="error"></p>
+
+    <section id="result">
+      <div class="card" id="card">
+        <div class="card-head">
+          <div>
+            <div class="player" id="cPlayer"></div>
+            <div class="title" id="cTitle"></div>
+          </div>
+          <div class="score"><b id="cScore"></b><small>峡谷评分</small></div>
+        </div>
+        <div class="stats">
+          <div class="stat"><b id="cWin"></b><small>胜率</small></div>
+          <div class="stat"><b id="cKda"></b><small>KDA</small></div>
+          <div class="stat"><b id="cDeaths"></b><small>场均阵亡</small></div>
+          <div class="stat"><b id="cCs"></b><small>分均补刀</small></div>
+        </div>
+        <div class="persona" id="cPersona">
+          <span class="rarity" id="cRarity"></span>
+          <span>本次锐评官：<b id="cVoice"></b> · <b id="cForm"></b></span>
+        </div>
+        <div class="lines" id="cLines"></div>
+        <div class="tags" id="cTags"></div>
+        <div class="advice" id="cAdvice"></div>
+        <div class="footer"><span id="cSource"></span><span>峡谷锐评官</span></div>
+      </div>
+      <div class="actions">
+        <button id="download" type="button">保存卡片图片</button>
+        <button id="again" type="button" class="ghost">🎲 换个锐评官</button>
+      </div>
+
+      <div id="reportIntro">
+        <h2>赛后分析报告</h2>
+        <p class="hint">选一场对局，看看这局到底输在哪、赢在哪</p>
+      </div>
+      <div class="matches" id="matches"></div>
+    </section>
+
+    <section id="report">
+      <div class="report" id="reportCard">
+        <div class="r-head">
+          <div class="grade" id="rGrade"></div>
+          <div>
+            <div class="r-meta" id="rMeta"></div>
+            <div class="r-headline" id="rHeadline"></div>
+          </div>
+        </div>
+        <div class="r-section">
+          <h3>数据对比</h3>
+          <div class="legend">
+            <span><i style="background:var(--gold)"></i>你</span>
+            <span id="rOpLegend"><i style="background:#5b6b8c"></i>对位</span>
+            <span><i style="border-left:2px dashed var(--text);width:0;border-radius:0"></i>位置参考线</span>
+          </div>
+          <div id="rMetrics"></div>
+        </div>
+        <div class="r-section">
+          <h3>做得好的</h3>
+          <ul class="list good" id="rHighlights"></ul>
+        </div>
+        <div class="r-section">
+          <h3>主要问题</h3>
+          <div id="rProblems"></div>
+        </div>
+        <div class="r-section">
+          <h3>下一局这样打</h3>
+          <ul class="list todo" id="rSuggestions"></ul>
+        </div>
+        <div class="footer"><span id="rSource"></span><span>峡谷锐评官</span></div>
+      </div>
+      <div class="actions">
+        <button id="saveReport" type="button">保存报告图片</button>
+        <button id="backToList" type="button" class="ghost">返回对局列表</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    fetch("/api/config").then((r) => r.json()).then((cfg) => {
+      $("server").innerHTML = cfg.servers.map((s) => `<option value="${s.id}">${s.label}</option>`).join("");
+      $("demoNotice").hidden = cfg.riotEnabled;
+    });
+
+    let mode = "image";
+    let imageData = null; // 压缩后的截图
+    let lastResult = null; // 上一次的结果，换锐评官时复用识别出的数据，不用重新识图
+
+    document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => {
+      mode = t.dataset.mode;
+      document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("active", x === t));
+      $("modeImage").hidden = mode !== "image";
+      $("modeName").hidden = mode !== "name";
+    }));
+
+    // 前端先把图片缩到最长边 1600px 再上传，省流量也省识图费用
+    function loadImage(file) {
+      if (!file || !file.type.startsWith("image/")) return;
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, 1600 / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        imageData = canvas.toDataURL("image/jpeg", 0.85);
+        $("preview").src = imageData;
+        $("preview").hidden = false;
+        $("dropText").hidden = true;
+        URL.revokeObjectURL(img.src);
+      };
+      img.src = URL.createObjectURL(file);
+    }
+    $("file").addEventListener("change", (e) => loadImage(e.target.files[0]));
+    $("drop").addEventListener("dragover", (e) => { e.preventDefault(); $("drop").classList.add("over"); });
+    $("drop").addEventListener("dragleave", () => $("drop").classList.remove("over"));
+    $("drop").addEventListener("drop", (e) => {
+      e.preventDefault();
+      $("drop").classList.remove("over");
+      loadImage(e.dataTransfer.files[0]);
+    });
+
+    async function post(url, body) {
+      const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "出错了");
+      return data;
+    }
+
+    async function roast(reroll = false) {
+      const style = document.querySelector("input[name=style]:checked").value;
+      if (!reroll && mode === "image" && !imageData) {
+        $("error").textContent = "先选一张战绩截图";
+        return;
+      }
+      $("error").textContent = "";
+      $("submit").disabled = $("again").disabled = true;
+      $("submit").textContent = !reroll && mode === "image" ? "锐评官正在看你的截图…" : "锐评官正在看你的战绩…";
+      try {
+        let data;
+        if (reroll && lastResult) {
+          // 换个锐评官：复用已有数据
+          data = await post("/api/roast", { games: lastResult.games, player: lastResult.player, source: lastResult.server, style });
+          data.fromScreenshot = lastResult.fromScreenshot;
+        } else if (mode === "image") {
+          data = await post("/api/roast-image", { image: imageData, style });
+        } else {
+          data = await post("/api/roast", { riotId: $("riotId").value, server: $("server").value, style });
+        }
+        lastResult = data;
+        render(data);
+      } catch (e) {
+        $("error").textContent = e.message;
+      } finally {
+        $("submit").disabled = $("again").disabled = false;
+        $("submit").textContent = "开始锐评";
+      }
+    }
+
+    let games = [];
+
+    function renderMatches() {
+      $("matches").replaceChildren(...games.map((g, i) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "match " + (g.win ? "win" : "loss");
+        const when = g.playedAt
+          ? " · " + new Date(g.playedAt).toLocaleString("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })
+          : "";
+        btn.innerHTML = `<div class="bar"></div>
+          <div><b></b><small></small></div>
+          <div class="kda"></div>`;
+        btn.querySelector("b").textContent = `${g.champion} · ${g.position}`;
+        btn.querySelector("small").textContent = `${g.win ? "胜利" : "失败"} · ${g.queue} · ${g.minutes} 分钟${when}`;
+        btn.querySelector(".kda").textContent = `${g.kills}/${g.deaths}/${g.assists}`;
+        btn.addEventListener("click", () => openReport(i, btn));
+        return btn;
+      }));
+    }
+
+    async function openReport(i, btn) {
+      document.querySelectorAll(".match").forEach((b) => b.classList.toggle("active", b === btn));
+      const label = btn.querySelector(".kda");
+      const kda = label.textContent;
+      label.textContent = "分析中…";
+      btn.disabled = true;
+      try {
+        const res = await fetch("/api/report", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ game: games[i] }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "出错了");
+        renderReport(data);
+      } catch (e) {
+        $("error").textContent = e.message;
+      } finally {
+        label.textContent = kda;
+        btn.disabled = false;
+      }
+    }
+
+    function renderReport({ game: g, metrics, analysis: a }) {
+      const li = (t) => Object.assign(document.createElement("li"), { textContent: t });
+      $("rGrade").textContent = a.grade;
+      $("rGrade").className = "grade g-" + a.grade;
+      $("rMeta").textContent = `${g.win ? "胜利" : "失败"} · ${g.champion} · ${g.position} · ${g.kills}/${g.deaths}/${g.assists} · ${g.minutes} 分钟` +
+        (g.opponent ? ` · 对位 ${g.opponent.champion}` : "");
+      $("rHeadline").textContent = a.headline;
+      $("rOpLegend").style.display = g.opponent ? "" : "none";
+
+      $("rMetrics").replaceChildren(...metrics.map((m) => {
+        // 三个值里最大的占满宽度
+        const max = Math.max(m.me, m.opponent ?? 0, m.benchmark ?? 0) || 1;
+        const row = document.createElement("div");
+        row.className = "metric";
+        row.innerHTML = `<div class="metric-label"></div><div class="metric-bars"></div>`;
+        row.querySelector(".metric-label").textContent = m.label;
+        const bars = row.querySelector(".metric-bars");
+        const bar = (cls, v) => {
+          const el = document.createElement("div");
+          el.className = "mbar " + cls;
+          el.style.width = (v / max) * 100 + "%";
+          el.innerHTML = "<span></span>";
+          el.firstChild.textContent = v;
+          bars.append(el);
+        };
+        bar("me", m.me);
+        if (m.opponent !== null) bar("op", m.opponent);
+        if (m.benchmark !== null) {
+          const b = document.createElement("div");
+          b.className = "bench";
+          b.style.left = (m.benchmark / max) * 100 + "%";
+          b.title = "参考线 " + m.benchmark;
+          bars.append(b);
+        }
+        return row;
+      }));
+
+      $("rHighlights").replaceChildren(...a.highlights.map(li));
+      $("rProblems").replaceChildren(...(a.problems.length ? a.problems : [{ title: "没有明显问题", detail: "这局整体发挥稳定" }]).map((p) => {
+        const d = document.createElement("div");
+        d.className = "problem";
+        d.innerHTML = "<b></b><p></p>";
+        d.querySelector("b").textContent = p.title;
+        d.querySelector("p").textContent = p.detail;
+        return d;
+      }));
+      $("rSuggestions").replaceChildren(...a.suggestions.map(li));
+      $("rSource").textContent = a.source === "ai" ? "AI 教练分析" : "规则分析（未连接 AI）";
+      $("report").style.display = "block";
+      $("report").scrollIntoView({ behavior: "smooth" });
+    }
+
+    function render({ player, server, summary: s, roast: r, games: list, fromScreenshot }) {
+      games = list;
+      renderMatches();
+      $("report").style.display = "none";
+      // 截图里的数据不够细，暂不提供赛后报告
+      $("reportIntro").hidden = $("matches").hidden = Boolean(fromScreenshot);
+      $("cPlayer").textContent = `${player} · ${server} · 最近 ${s.games} 场`;
+      $("cTitle").textContent = r.title;
+      $("cScore").textContent = r.score;
+      $("cWin").textContent = s.winRate + "%";
+      $("cKda").textContent = s.kda;
+      $("cDeaths").textContent = s.avgDeaths;
+      $("cCs").textContent = s.avgCsPerMin ?? "—";
+      $("cLines").replaceChildren(...r.lines.map((t) => Object.assign(document.createElement("p"), { textContent: t })));
+      $("card").className = "card " + r.persona.rarity;
+      $("cRarity").className = "rarity " + r.persona.rarity;
+      $("cRarity").textContent = r.persona.rarity;
+      $("cVoice").textContent = r.persona.voice;
+      $("cForm").textContent = r.persona.form;
+      $("cTags").replaceChildren(...r.tags.map((t) => Object.assign(document.createElement("span"), { className: "tag", textContent: "#" + t })));
+      $("cAdvice").textContent = r.advice ? "💡 " + r.advice : "";
+      $("cSource").textContent = r.source === "ai"
+        ? `AI 锐评 · 共 ${r.persona.totalCombos} 种锐评官`
+        : "模板锐评（连接 AI 后锐评官才会用自己的口吻说话）";
+      $("result").style.display = "block";
+      $("result").scrollIntoView({ behavior: "smooth" });
+    }
+
+    $("form").addEventListener("submit", (e) => { e.preventDefault(); roast(false); });
+    $("again").addEventListener("click", () => roast(true));
+    async function saveImage(el, filename) {
+      const canvas = await html2canvas(el, { backgroundColor: "#0b0f17", scale: 2 });
+      const a = document.createElement("a");
+      a.download = filename;
+      a.href = canvas.toDataURL("image/png");
+      a.click();
+    }
+    $("download").addEventListener("click", () => saveImage($("card"), "峡谷锐评.png"));
+    $("saveReport").addEventListener("click", () => saveImage($("reportCard"), "赛后报告.png"));
+    $("backToList").addEventListener("click", () => $("matches").scrollIntoView({ behavior: "smooth" }));
+  </script>
+</body>
+</html>
